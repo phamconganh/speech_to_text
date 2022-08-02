@@ -135,12 +135,16 @@ class SpeechToTextPlugin extends SpeechToTextPlatform {
   /// crashes
   ///
   @override
-  Future<bool> listen(
-      {String? localeId,
-      partialResults = true,
-      onDevice = false,
-      int listenMode = 0,
-      sampleRate = 0}) async {
+  Future<bool> listen({
+    String? localeId,
+    partialResults = true,
+    onDevice = false,
+    int listenMode = 0,
+    sampleRate = 0,
+    // CA add audio
+    String? prompt,
+    bool? dialogMode,
+  }) async {
     if (null == _webSpeech) return false;
     _webSpeech!.onResult.listen((speechEvent) => _onResult(speechEvent));
     _webSpeech!.interimResults = partialResults;

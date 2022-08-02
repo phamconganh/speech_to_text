@@ -138,12 +138,16 @@ abstract class SpeechToTextPlatform extends PlatformInterface {
   /// crash with `sampleRate != device's supported sampleRate`, try 44100 if seeing
   /// crashes
   ///
-  Future<bool> listen(
-      {String? localeId,
-      partialResults = true,
-      onDevice = false,
-      int listenMode = 0,
-      sampleRate = 0}) {
+  Future<bool> listen({
+    String? localeId,
+    partialResults = true,
+    onDevice = false,
+    int listenMode = 0,
+    sampleRate = 0,
+    // CA add audio
+    String? prompt,
+    bool? dialogMode,
+  }) {
     throw UnimplementedError('listen() has not been implemented.');
   }
 

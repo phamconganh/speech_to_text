@@ -60,11 +60,14 @@ class SpeechRecognitionResult {
   bool get hasConfidenceRating =>
       alternates.isNotEmpty ? alternates.first.hasConfidenceRating : false;
 
-  SpeechRecognitionResult(this.alternates, this.finalResult);
+  // CA add audio
+  final String? audioPath;
+
+  SpeechRecognitionResult(this.alternates, this.finalResult, {this.audioPath});
 
   @override
   String toString() {
-    return 'SpeechRecognitionResult words: $alternates, final: $finalResult';
+    return 'SpeechRecognitionResult words: $alternates, final: $finalResult, audioPath: $audioPath';
   }
 
   @override
@@ -83,7 +86,7 @@ class SpeechRecognitionResult {
   Map<String, dynamic> toJson() => _$SpeechRecognitionResultToJson(this);
 
   SpeechRecognitionResult toFinal() {
-    return SpeechRecognitionResult(alternates, true);
+    return SpeechRecognitionResult(alternates, true, audioPath: audioPath);
   }
 }
 

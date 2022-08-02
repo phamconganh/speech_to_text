@@ -393,17 +393,21 @@ class SpeechToText {
   /// crash with `sampleRate != device's supported sampleRate`, try 44100 if seeing
   /// crashes
   ///
-  Future listen(
-      {SpeechResultListener? onResult,
-      Duration? listenFor,
-      Duration? pauseFor,
-      String? localeId,
-      SpeechSoundLevelChange? onSoundLevelChange,
-      cancelOnError = false,
-      partialResults = true,
-      onDevice = false,
-      ListenMode listenMode = ListenMode.confirmation,
-      sampleRate = 0}) async {
+  Future<bool> listen({
+    SpeechResultListener? onResult,
+    Duration? listenFor,
+    Duration? pauseFor,
+    String? localeId,
+    SpeechSoundLevelChange? onSoundLevelChange,
+    cancelOnError = false,
+    partialResults = true,
+    onDevice = false,
+    ListenMode listenMode = ListenMode.confirmation,
+    sampleRate = 0,
+    // CA add audio
+    String? prompt,
+    bool? dialogMode = false,
+  }) async {
     if (!_initWorked) {
       throw SpeechToTextNotInitializedException();
     }
@@ -421,16 +425,21 @@ class SpeechToText {
     _notifyFinalTimer = null;
     try {
       var started = await SpeechToTextPlatform.instance.listen(
-          partialResults: partialResults || null != pauseFor,
-          onDevice: onDevice,
-          listenMode: listenMode.index,
-          sampleRate: sampleRate,
-          localeId: localeId);
+        partialResults: partialResults || null != pauseFor,
+        onDevice: onDevice,
+        listenMode: listenMode.index,
+        sampleRate: sampleRate,
+        localeId: localeId,
+        // CA add audio
+        prompt: prompt,
+        dialogMode: dialogMode,
+      );
       if (started) {
         _listenStartedAt = clock.now().millisecondsSinceEpoch;
         _lastSpeechEventAt = _listenStartedAt;
         _setupListenAndPause(pauseFor, listenFor);
       }
+      return started;
     } on PlatformException catch (e) {
       throw ListenFailedException(e.message, e.details, e.stacktrace);
     }

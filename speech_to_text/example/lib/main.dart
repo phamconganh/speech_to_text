@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:math';
 
+import 'package:audioplayers/audioplayers.dart';
 import 'package:flutter/material.dart';
 import 'package:speech_to_text/speech_recognition_error.dart';
 import 'package:speech_to_text/speech_recognition_result.dart';
@@ -19,6 +20,7 @@ class SpeechSampleApp extends StatefulWidget {
 class _SpeechSampleAppState extends State<SpeechSampleApp> {
   bool _hasSpeech = false;
   bool _logEvents = false;
+  bool _useLegacy = false;
   final TextEditingController _pauseForController =
       TextEditingController(text: '3');
   final TextEditingController _listenForController =
@@ -33,9 +35,21 @@ class _SpeechSampleAppState extends State<SpeechSampleApp> {
   List<LocaleName> _localeNames = [];
   final SpeechToText speech = SpeechToText();
 
+  String? audioPath;
+  final AudioPlayer audioPlayer = AudioPlayer();
+
   @override
   void initState() {
     super.initState();
+    audioPlayer.onPlayerStateChanged.listen((event) {
+      print('audioPlayer.onPlayerStateChanged: $event');
+    });
+  }
+
+  @override
+  void dispose() {
+    super.dispose();
+    audioPlayer.dispose();
   }
 
   /// This initializes SpeechToText. That only has to be done
@@ -86,6 +100,26 @@ class _SpeechSampleAppState extends State<SpeechSampleApp> {
                 InitSpeechWidget(_hasSpeech, initSpeechState),
                 SpeechControlWidget(_hasSpeech, speech.isListening,
                     startListening, stopListening, cancelListening),
+                StreamBuilder<PlayerState>(
+                    stream: audioPlayer.onPlayerStateChanged,
+                    builder: (context, snapshot) {
+                      return IconButton(
+                        onPressed: snapshot.data == PlayerState.playing
+                            ? () async {
+                                await audioPlayer.stop();
+                              }
+                            : (audioPath != null
+                                ? () async {
+                                    await audioPlayer
+                                        .setSourceDeviceFile(audioPath!);
+                                    await audioPlayer.resume();
+                                  }
+                                : null),
+                        icon: Icon(snapshot.data != PlayerState.playing
+                            ? Icons.play_arrow
+                            : Icons.pause_circle),
+                      );
+                    }),
                 SessionOptionsWidget(
                   _currentLocaleId,
                   _switchLang,
@@ -94,6 +128,8 @@ class _SpeechSampleAppState extends State<SpeechSampleApp> {
                   _switchLogging,
                   _pauseForController,
                   _listenForController,
+                  _useLegacy,
+                  _switchLegacy,
                 ),
               ],
             ),
@@ -125,15 +161,21 @@ class _SpeechSampleAppState extends State<SpeechSampleApp> {
     // Similarly `pauseFor` is a maximum not a minimum and may be ignored
     // on some devices.
     speech.listen(
-        onResult: resultListener,
-        listenFor: Duration(seconds: listenFor ?? 30),
-        pauseFor: Duration(seconds: pauseFor ?? 3),
-        partialResults: true,
-        localeId: _currentLocaleId,
-        onSoundLevelChange: soundLevelListener,
-        cancelOnError: true,
-        listenMode: ListenMode.confirmation);
-    setState(() {});
+      onResult: resultListener,
+      listenFor: Duration(seconds: listenFor ?? 30),
+      pauseFor: Duration(seconds: pauseFor ?? 3),
+      partialResults: true,
+      localeId: _currentLocaleId,
+      onSoundLevelChange: soundLevelListener,
+      cancelOnError: true,
+      listenMode: ListenMode.confirmation,
+      // cancelOnError: false,
+      // listenMode: ListenMode.dictation,
+      dialogMode: !_useLegacy,
+    );
+    setState(() {
+      audioPath = null;
+    });
   }
 
   void stopListening() {
@@ -156,16 +198,17 @@ class _SpeechSampleAppState extends State<SpeechSampleApp> {
   /// available after `listen` is called.
   void resultListener(SpeechRecognitionResult result) {
     _logEvent(
-        'Result listener final: ${result.finalResult}, words: ${result.recognizedWords}');
+        'Result listener final: ${result.finalResult}, words: ${result.recognizedWords}, audiopath: ${result.audioPath}');
     setState(() {
       lastWords = '${result.recognizedWords} - ${result.finalResult}';
+      audioPath = result.audioPath;
     });
   }
 
   void soundLevelListener(double level) {
     minSoundLevel = min(minSoundLevel, level);
     maxSoundLevel = max(maxSoundLevel, level);
-    // _logEvent('sound level $level: $minSoundLevel - $maxSoundLevel ');
+    _logEvent('sound level $level: $minSoundLevel - $maxSoundLevel ');
     setState(() {
       this.level = level;
     });
@@ -204,6 +247,12 @@ class _SpeechSampleAppState extends State<SpeechSampleApp> {
   void _switchLogging(bool? val) {
     setState(() {
       _logEvents = val ?? false;
+    });
+  }
+
+  void _switchLegacy(bool? val) {
+    setState(() {
+      _useLegacy = val ?? false;
     });
   }
 }
@@ -362,6 +411,8 @@ class SessionOptionsWidget extends StatelessWidget {
       this.switchLogging,
       this.pauseForController,
       this.listenForController,
+      this.useLegacy,
+      this.switchLegacy,
       {Key? key})
       : super(key: key);
 
@@ -372,6 +423,8 @@ class SessionOptionsWidget extends StatelessWidget {
   final TextEditingController listenForController;
   final List<LocaleName> localeNames;
   final bool logEvents;
+  final bool useLegacy;
+  final void Function(bool?) switchLegacy;
 
   @override
   Widget build(BuildContext context) {
@@ -423,6 +476,15 @@ class SessionOptionsWidget extends StatelessWidget {
               Checkbox(
                 value: logEvents,
                 onChanged: switchLogging,
+              ),
+            ],
+          ),
+          Row(
+            children: [
+              Text('Android Legacy: '),
+              Checkbox(
+                value: useLegacy,
+                onChanged: switchLegacy,
               ),
             ],
           ),

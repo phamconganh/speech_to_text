@@ -78,12 +78,15 @@ class TestSpeechToTextPlatform extends SpeechToTextPlatform {
   }
 
   @override
-  Future<bool> listen(
-      {String? localeId,
-      partialResults = true,
-      onDevice = false,
-      int listenMode = 0,
-      sampleRate = 0}) async {
+  Future<bool> listen({
+    String? localeId,
+    partialResults = true,
+    onDevice = false,
+    int listenMode = 0,
+    sampleRate = 0,
+    String? prompt,
+    bool? dialogMode,
+  }) async {
     listenInvoked = true;
     listenLocale = localeId;
     if (listenException) {

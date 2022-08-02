@@ -7,29 +7,30 @@ part of 'speech_recognition_result.dart';
 // **************************************************************************
 
 SpeechRecognitionResult _$SpeechRecognitionResultFromJson(
-    Map<String, dynamic> json) {
-  return SpeechRecognitionResult(
-    (json['alternates'] as List<dynamic>)
-        .map((e) => SpeechRecognitionWords.fromJson(e as Map<String, dynamic>))
-        .toList(),
-    json['finalResult'] as bool,
-  );
-}
+        Map<String, dynamic> json) =>
+    SpeechRecognitionResult(
+      (json['alternates'] as List<dynamic>)
+          .map(
+              (e) => SpeechRecognitionWords.fromJson(e as Map<String, dynamic>))
+          .toList(),
+      json['finalResult'] as bool,
+      audioPath: json['audioPath'] as String?,
+    );
 
 Map<String, dynamic> _$SpeechRecognitionResultToJson(
         SpeechRecognitionResult instance) =>
     <String, dynamic>{
       'alternates': instance.alternates.map((e) => e.toJson()).toList(),
       'finalResult': instance.finalResult,
+      'audioPath': instance.audioPath,
     };
 
 SpeechRecognitionWords _$SpeechRecognitionWordsFromJson(
-    Map<String, dynamic> json) {
-  return SpeechRecognitionWords(
-    json['recognizedWords'] as String,
-    (json['confidence'] as num).toDouble(),
-  );
-}
+        Map<String, dynamic> json) =>
+    SpeechRecognitionWords(
+      json['recognizedWords'] as String,
+      (json['confidence'] as num).toDouble(),
+    );
 
 Map<String, dynamic> _$SpeechRecognitionWordsToJson(
         SpeechRecognitionWords instance) =>
